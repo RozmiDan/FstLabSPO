@@ -1,0 +1,6 @@
+int l = 0
+double d
+int funktion () { 
+    print("%d", l)
+    return 0
+}
