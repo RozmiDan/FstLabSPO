@@ -1,9 +1,10 @@
 
-method myFunction(x : int, flag : bool) : string {
-    var a : int;
+method myFunction(x : int, flag : bool) : string
+    var a : uint;
+    begin 
     if (flag) then
         a := 10;
     else
         a := 20;
     end;
-}
+

@@ -1,9 +1,9 @@
 TARGET = FstLabSpo 
 CC = gcc
 
-LDFLAGS= -Lantlr -lMyGrammarTestParser
+#LDFLAGS= -Lantlr -lMyGrammarTestParser
 CFLAGS = -I/usr/local/include -Wall -O2
-LDFLAGS = -L/lib/x86_64-linux-gnu -lantlr3c
+LDFLAGS = -L/lib/x86_64-linux-gnu -lantlr3c 
 
 PREF_SRC = ./src/
 PREF_OBJ = ./obj/
