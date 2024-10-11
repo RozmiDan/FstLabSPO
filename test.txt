@@ -1,10 +1,16 @@
 
-method myFunction(x : int, flag : bool) : string
-    var a : uint;
-    begin 
-    if (flag) then
-        a := 10;
-    else
-        a := 20;
+method myFunction(x : int, flag2 : MyType, VAL32 : array [,] of string) : uint
+var fst_val, scnd_val, thd_val : long;
+begin 
+    while fst_val > (scnd_val - thd_val) do thd_val := 23 * -2;
+    myArray[1] := x + 5;
+    if true then begin
+        x := 0b01001;
+        if x == 9 then y := x + 1;
+        repeat
+            flag := !flag;
+        until x && 0;
     end;
+end;
+
 

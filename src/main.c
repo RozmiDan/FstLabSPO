@@ -3,6 +3,26 @@
 #include "MyGrammarTestLexer.h"
 #include "MyGrammarTestParser.h"
 
+// Function to write the parse tree in Dot format
+void writeTreeAsDot(pANTLR3_BASE_TREE tree, FILE* file, int* nodeCounter) {
+    if (tree == NULL) {
+        return;
+    }
+
+    // Give the current node a unique ID
+    int currentNodeId = (*nodeCounter)++;
+    fprintf(file, "  node%d [label=\"%s\"];\n", currentNodeId, (char*)tree->getText(tree)->chars);
+
+    // Recursively print children nodes
+    int childCount = tree->getChildCount(tree);
+    for (int i = 0; i < childCount; i++) {
+        pANTLR3_BASE_TREE child = (pANTLR3_BASE_TREE)tree->getChild(tree, i);
+        int childNodeId = *nodeCounter;
+        writeTreeAsDot(child, file, nodeCounter);
+        fprintf(file, "  node%d -> node%d;\n", currentNodeId, childNodeId);
+    }
+}
+
 int main(int argc, char *argv[]) {
     
     //START WORKING WITH FILE
@@ -36,8 +56,6 @@ int main(int argc, char *argv[]) {
     pANTLR3_COMMON_TOKEN_STREAM tokens = antlr3CommonTokenStreamSourceNew(ANTLR3_SIZE_HINT, TOKENSOURCE(lex));
     pMyGrammarTestParser parser = MyGrammarTestParserNew(tokens);
 
-    //parser->adaptor = antlr3CommonTreeAdaptorNew(); // TODO
-
     parser->pParser->rec->displayRecognitionError = ANTLR3_TRUE; // Включаем отображение ошибок
 
     if (parser == NULL) {
@@ -52,41 +70,28 @@ int main(int argc, char *argv[]) {
         return 1; 
     }
 
-
     if (parser->pParser->rec->state->errorCount > 0) {
         printf("Parsing failed: %d errors.\n", parser->pParser->rec->state->errorCount);
     } else {
         pANTLR3_BASE_TREE tree = result.tree;
-        // Выводим дерево разбора, если оно было сгенерировано
         if (tree != NULL) {
-            printf("Tree: %s\n", tree->toStringTree(tree)->chars);
+            // Create a Dot file
+            FILE *dotFile = fopen("parsetree.dot", "w");
+            if (dotFile != NULL) {
+                fprintf(dotFile, "digraph ParseTree {\n");
+                fprintf(dotFile, "  node [shape=box];\n");
+                int nodeCounter = 0;
+                writeTreeAsDot(tree, dotFile, &nodeCounter);
+                fprintf(dotFile, "}\n");
+                fclose(dotFile);
+                printf("Dot file generated: parsetree.dot\n");
+            } else {
+                printf("Failed to create dot file.\n");
+            }
         } else {
             printf("No tree generated.\n");
         }
     }
-    
-    // if (parser->pParser->rec->state->errorCount > 0) {
-    //     printf("Parsing failed: %d errors.\n", parser->pParser->rec->state->errorCount);
-    // } else {
-    //     pANTLR3_BASE_TREE tree = result.tree;
-    //     // Выводим дерево разбора, если оно было сгенерировано
-    //     if (parser->adaptor != NULL && tree != NULL) {
-    //         FILE *dotFile = fopen("parsetree.dot", "w");
-    //         if (dotFile != NULL) {
-    //             // Генерируем граф в формате Dot
-    //             printf("Access\n");
-    //             parser->adaptor->makeDot(tree, dotFile);
-    //             fclose(dotFile);
-    //             printf("Dot file generated: parsetree.dot\n");
-    //         } else {
-    //             printf("Failed to create dot file.\n");
-    //         }
-    //     } else {
-    //         printf("Failed to (parser->adaptor != NULL && tree != NULL)\n");
-    //     }
-    // }
-
-    //END WORKING WITH ANTLR
 
     tokens->free(tokens);
     lex->free(lex);
