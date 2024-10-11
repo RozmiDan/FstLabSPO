@@ -1,6 +1,5 @@
 grammar MyGrammarTest;
 
-
 options
 {
     language = C;
@@ -13,33 +12,26 @@ tokens{
     SourceItem;
 	FuncDef;
 	FuncSignature;
-	ListArg;
 	TypeRef;
     Vars;
     BodySig;
-	Array;
     ListArgDefs;
     ListIdentifier;
     BuiltinType;
     CustomType;
     ArrayType;
-	Statement;
-	BUILTIN;
-	CUSTOM;
-	BLOCK;
-	BREAKSTATEMENT;
-	LOOPSTATEMENT;
-	IFSTATEMENT;
-	ST;
-	EXPRESSION;
-	EXPR;
-	Call;
-	ARGS;
+    IfStatement;
+    BlockStatement;
+    WhileStatement;
+    DoStatement;
+    BreakStatement;
+    ExpressionStatement;
+    Expression;
+	CallExpr;
+    ListExpr;
+    Braces;
+    Indexer;
 }
-
-//list_item : (item (',' item)*)? ;
-//fragment item : (BOOL_LITERAL | CHAR | STRING_LIT | HEX_LITERAL | BITS_LITERAL | DEC_LITERAL) ;
-
 
 // P a r s e r  p a r t
 
@@ -52,7 +44,7 @@ list_identifier: (IDENTIFIER (',' IDENTIFIER)*)? -> ^(ListIdentifier IDENTIFIER*
 
 typeRef : builtin -> ^(BuiltinType builtin)
     | custom -> ^(CustomType custom)
-    | array ;                                               // -> ^(ArrayType array)
+    | array ;                             
 fragment builtin : ('bool' | 'byte' | 'int' | 'uint' | 'long' | 'ulong' | 'char' | 'string');
 fragment custom : IDENTIFIER ;
 fragment array : 'array' '[' (',')* ']' 'of' typeRef -> ^(ArrayType 'array' typeRef) ;
@@ -62,11 +54,15 @@ fragment list_argDef : (argDef (',' argDef)*)? -> ^( ListArgDefs argDef*) ;
 fragment argDef : IDENTIFIER typeRefDef? ;
 fragment typeRefDef : ':' typeRef -> ^(TypeRef typeRef) ;
 
-
 // S t a t e m e n t s
 
-statement : ( ifStatement | blockStatement | whileStatement | doStatement
-    | breakStatement | expressionStatement ) ;
+statement : 
+      ifStatement -> ^(IfStatement ifStatement)
+    | blockStatement -> ^(BlockStatement blockStatement)
+    | whileStatement -> ^(WhileStatement whileStatement)
+    | doStatement  -> ^(DoStatement doStatement)
+    | breakStatement -> ^(BreakStatement breakStatement)
+    | expressionStatement -> ^(ExpressionStatement expressionStatement);
 
 ifStatement : 'if' expr 'then' statement ('else' statement)? ;
 
@@ -80,50 +76,66 @@ breakStatement : 'break' ';' ;
 
 expressionStatement : expr ';' ;
 
-
 // E x p r e s s i o n s
 
-expr : assignExpr ;
+expr : assignExpr -> ^( Expression assignExpr ) ;
 
-fragment assignExpr : binaryExpr ('+=' | ':=') binaryExpr  | binaryExpr;
+assignExpr : logicOrExpr ( ':='^ logicOrExpr )* ;
 
-fragment binaryExpr : additiveExpr ;
+logicOrExpr : logicAndExpr ( '||'^ logicAndExpr )* ;
 
-fragment additiveExpr : multiplicativeExpr ('+' | '-') multiplicativeExpr  | multiplicativeExpr ;
+logicAndExpr : inclusOrExpr ( '&&'^ inclusOrExpr )* ;
 
-fragment multiplicativeExpr : unaryExpr ('*' | '/' | '%') unaryExpr | unaryExpr ;
+inclusOrExpr : xorExpr ( '|'^ xorExpr )* ;
 
-fragment unaryExpr : unOp unaryExpr | primaryExpr ;
+xorExpr : andExpr ( '^'^ andExpr )* ;
 
-fragment primaryExpr
-    : literal                            
-    | IDENTIFIER                         
-    | '(' expr ')'                        
-    | call                               
-    | indexer                            
+andExpr : equalExpr ( '&'^ equalExpr )* ;
+
+equalExpr: relatExpr (( '!=' | '==' )^ relatExpr)* ;
+
+relatExpr : shiftExpr ( ('<' | '>' | '<=' | '>=')^ shiftExpr)* ;
+
+shiftExpr : addExpr (('<<' | '>>')^ addExpr)* ;
+
+addExpr : multExpr (('+' | '-')^ multExpr)* ;
+
+multExpr : unaryExpr ( ('*' | '/' | '%')^ unaryExpr)? ;
+
+unaryExpr :  ('!'|'~')^ unaryExpr |  ('-'^ | '+'^)? primaryExpr ; 
+
+primaryExpr :
+     LITERAL  
+    | IDENTIFIER                             
+    | callExpr   
+    | indexer
+    | '(' expr ')' -> ^(Braces expr)                         
     ;
 
-call : IDENTIFIER '(' list_expr ')' ;
+callExpr: IDENTIFIER '(' list_expr ')' -> ^(CallExpr IDENTIFIER list_expr) ;
 
-fragment indexer : IDENTIFIER '[' list_expr ']' ;
+indexer: IDENTIFIER '[' list_expr ']' -> ^(Indexer IDENTIFIER list_expr) ;
 
-fragment literal : BOOL_LITERAL | STRING_LIT | CHAR | HEX_LITERAL | BITS_LITERAL | DEC_LITERAL ;
-
-list_expr : (expr (',' expr)*)? ;
-
-unOp : ('-' | '!' ) ;
-
+list_expr : (expr (',' expr)*)? -> ^(ListExpr expr*) ;
 
 // L e x e r 
 
-BOOL_LITERAL : ( 'true' | 'false' );
+LITERAL
+  :  BOOL_LITERAL
+  |  BITS_LITERAL
+  |  HEX_LITERAL
+  |  DEC_LITERAL
+  |  CHAR
+  |  STRING_LIT
+  ;
 
-BITS_LITERAL : '0' ('b'|'B') ('0'|'1')+ ;
-HEX_LITERAL : '0' ('x'|'X') HEX_DIGIT+ ;
+fragment BOOL_LITERAL : ( 'true' | 'false' );
+fragment BITS_LITERAL : '0' ('b'|'B') ('0'|'1')+ ;
+fragment HEX_LITERAL : '0' ('x'|'X') HEX_DIGIT+ ;
 fragment HEX_DIGIT : ('0'..'9'|'a'..'f'|'A'..'F') ;
-DEC_LITERAL : ('0'..'9')+ ;
-CHAR : '\'' (ESC_SEQ | ~('\'')) '\'' ;
-STRING_LIT : '"' ( ESC_SEQ | ~('\\'|'"') )* '"';
+fragment DEC_LITERAL : ('0'..'9')+ ;
+fragment CHAR : '\'' (ESC_SEQ | ~('\'')) '\'' ;
+fragment STRING_LIT : '"' ( ESC_SEQ | ~('\\'|'"') )* '"';
 fragment ESC_SEQ : '\\' ('b'|'t'|'n'|'f'|'r'|'\"'|'\''|'\\') ;
 IDENTIFIER : ('a'..'z'|'A'..'Z'|'_') ('a'..'z'|'A'..'Z'|'0'..'9'|'_')* ;
 WS  :   ( ' ' | '\t' | '\r' | '\n' ) {$channel=HIDDEN;} ;

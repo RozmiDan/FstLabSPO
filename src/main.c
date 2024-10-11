@@ -36,7 +36,7 @@ int main(int argc, char *argv[]) {
     pANTLR3_COMMON_TOKEN_STREAM tokens = antlr3CommonTokenStreamSourceNew(ANTLR3_SIZE_HINT, TOKENSOURCE(lex));
     pMyGrammarTestParser parser = MyGrammarTestParserNew(tokens);
 
-    parser->adaptor = antlr3CommonTreeAdaptorNew(); // TODO
+    //parser->adaptor = antlr3CommonTreeAdaptorNew(); // TODO
 
     parser->pParser->rec->displayRecognitionError = ANTLR3_TRUE; // Включаем отображение ошибок
 
@@ -53,38 +53,38 @@ int main(int argc, char *argv[]) {
     }
 
 
-    // if (parser->pParser->rec->state->errorCount > 0) {
-    //     printf("Parsing failed: %d errors.\n", parser->pParser->rec->state->errorCount);
-    // } else {
-    //     pANTLR3_BASE_TREE tree = result.tree;
-    //     // Выводим дерево разбора, если оно было сгенерировано
-    //     if (tree != NULL) {
-    //         printf("Tree: %s\n", tree->toStringTree(tree)->chars);
-    //     } else {
-    //         printf("No tree generated.\n");
-    //     }
-    // }
-    
     if (parser->pParser->rec->state->errorCount > 0) {
         printf("Parsing failed: %d errors.\n", parser->pParser->rec->state->errorCount);
     } else {
         pANTLR3_BASE_TREE tree = result.tree;
         // Выводим дерево разбора, если оно было сгенерировано
-        if (parser->adaptor != NULL && tree != NULL) {
-            FILE *dotFile = fopen("parsetree.dot", "w");
-            if (dotFile != NULL) {
-                // Генерируем граф в формате Dot
-                printf("Access\n");
-                parser->adaptor->makeDot(tree, dotFile);
-                fclose(dotFile);
-                printf("Dot file generated: parsetree.dot\n");
-            } else {
-                printf("Failed to create dot file.\n");
-            }
+        if (tree != NULL) {
+            printf("Tree: %s\n", tree->toStringTree(tree)->chars);
         } else {
-            printf("Failed to (parser->adaptor != NULL && tree != NULL)\n");
+            printf("No tree generated.\n");
         }
     }
+    
+    // if (parser->pParser->rec->state->errorCount > 0) {
+    //     printf("Parsing failed: %d errors.\n", parser->pParser->rec->state->errorCount);
+    // } else {
+    //     pANTLR3_BASE_TREE tree = result.tree;
+    //     // Выводим дерево разбора, если оно было сгенерировано
+    //     if (parser->adaptor != NULL && tree != NULL) {
+    //         FILE *dotFile = fopen("parsetree.dot", "w");
+    //         if (dotFile != NULL) {
+    //             // Генерируем граф в формате Dot
+    //             printf("Access\n");
+    //             parser->adaptor->makeDot(tree, dotFile);
+    //             fclose(dotFile);
+    //             printf("Dot file generated: parsetree.dot\n");
+    //         } else {
+    //             printf("Failed to create dot file.\n");
+    //         }
+    //     } else {
+    //         printf("Failed to (parser->adaptor != NULL && tree != NULL)\n");
+    //     }
+    // }
 
     //END WORKING WITH ANTLR
 
