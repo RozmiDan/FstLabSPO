@@ -20,7 +20,7 @@ $(PREF_OBJ)%.o : $(PREF_SRC)%.c
 
 clean: 
 	rm $(TARGET) $(PREF_OBJ)*.o
-
+	rm -f *.dot
 distclean:
 	rm -f ./src/MyGrammarTestLexer.c ./src/MyGrammarTestLexer.h ./src/MyGrammarTestParser.c ./src/MyGrammarTestParser.h
 	rm -f ./src/MyGrammarTest.tokens
