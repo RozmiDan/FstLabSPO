@@ -13,7 +13,7 @@ void writeTreeAsDot(AstNode* node, FILE* file, int* nodeCounter) {
     
     for (int i = 0; i < node->childrenCount; i++) {
         int childNodeId = *nodeCounter;
-        writeTreeAsDot(&node->children[i], file, nodeCounter);
+        writeTreeAsDot(node->children[i], file, nodeCounter);
         fprintf(file, "  node%d -> node%d;\n", currentNodeId, childNodeId);
     }
 }
@@ -24,7 +24,7 @@ int main(int argc, char *argv[]) {
         return 1;
     }
 
-    FILE *file = fopen(argv[1], "r");
+    FILE* file = fopen(argv[1], "r");
     if (file == NULL) {
         perror("Error opening file");
         return 1;
@@ -39,8 +39,7 @@ int main(int argc, char *argv[]) {
     if (result.tree != NULL) {
         printf("Tree generated successfully.\n");
 
-        // Создаем Dot файл
-        FILE *dotFile = fopen(argv[2], "w");
+        FILE* dotFile = fopen(argv[2], "w");
         if (dotFile != NULL) {
             fprintf(dotFile, "digraph ParseTree {\n");
             fprintf(dotFile, "  node [shape=box];\n");

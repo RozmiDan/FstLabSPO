@@ -1,9 +1,8 @@
 #ifndef MYPARSE_H
 #define MYPARSE_H
 
-// Структура для хранения результата разбора
 typedef struct AstNode {
-    struct AstNode* children;
+    struct AstNode** children;
     char* nodeName;
     int childrenCount;
 } AstNode;
