@@ -13,7 +13,7 @@ tokens{
 	FuncDef;
 	FuncSignature;
 	TypeRef;
-    Vars;
+    VarsDefenition;
     BodySig;
     ListArgDefs;
     ListIdentifier;
@@ -31,6 +31,15 @@ tokens{
     ListExpr;
     Braces;
     Indexer;
+    Argument;
+    Condition;
+    Then;
+    Else;
+    FunctionCall;
+    ArrayAccess;
+    Args;
+    Indices;
+    ELEMS;
 }
 
 // P a r s e r  p a r t
@@ -39,42 +48,53 @@ source : sourceItem* -> ^(Source sourceItem*);
 
 sourceItem : funcDef -> ^(SourceItem funcDef);
 fragment funcDef : 'method' funcSignature ( body | ';' ) -> ^(FuncDef funcSignature body?);
-fragment body : ( 'var' ( list_identifier (':' typeRef)? ';' )* )? blockStatement -> ^(BodySig 'var' ^(Vars list_identifier typeRef?)* blockStatement) ; 
+fragment body : ( 'var' ( list_identifier (':' typeRef)? ';' )* )? blockStatement -> ^(BodySig ^(VarsDefenition list_identifier typeRef?)* blockStatement) ; 
 list_identifier: (IDENTIFIER (',' IDENTIFIER)*)? -> ^(ListIdentifier IDENTIFIER*) ;
 
 typeRef : builtin -> ^(BuiltinType builtin)
     | custom -> ^(CustomType custom)
-    | array ;                             
+    | arrayType;
+//    | array ;                             
 fragment builtin : ('bool' | 'byte' | 'int' | 'uint' | 'long' | 'ulong' | 'char' | 'string');
 fragment custom : IDENTIFIER ;
-fragment array : 'array' '[' (',')* ']' 'of' typeRef -> ^(ArrayType 'array' typeRef) ;
+//fragment array : 'array' '[' (',')* ']' 'of' typeRef -> ^(ArrayType typeRef) ;
+
+arrayType
+    : 'array' '[' elems ']' 'of' typeRef -> ^(ArrayType typeRef elems)
+    ;
+
+elems 
+    : (',' )* -> ^(ELEMS ',')
+    ;
 
 funcSignature : IDENTIFIER '(' list_argDef ')' typeRefDef? -> ^(FuncSignature IDENTIFIER list_argDef typeRefDef?);     
-fragment list_argDef : (argDef (',' argDef)*)? -> ^( ListArgDefs argDef*) ;		    
-fragment argDef : IDENTIFIER typeRefDef? ;
+fragment list_argDef : (argDef (',' argDef)*)? -> ^( ListArgDefs argDef*) ;	
+//fst mark	    
+fragment argDef : IDENTIFIER typeRefDef? -> ^(Argument IDENTIFIER typeRefDef?);
 fragment typeRefDef : ':' typeRef -> ^(TypeRef typeRef) ;
 
 // S t a t e m e n t s
 
 statement : 
-      ifStatement -> ^(IfStatement ifStatement)
-    | blockStatement -> ^(BlockStatement blockStatement)
-    | whileStatement -> ^(WhileStatement whileStatement)
-    | doStatement  -> ^(DoStatement doStatement)
-    | breakStatement -> ^(BreakStatement breakStatement)
-    | expressionStatement -> ^(ExpressionStatement expressionStatement);
+      ifStatement
+    | blockStatement 
+    | whileStatement 
+    | doStatement  
+    | breakStatement 
+    | expressionStatement;
 
-ifStatement : 'if' expr 'then' statement ('else' statement)? ;
+ifStatement : 'if' expr 'then' statement ('else' statement)? -> 
+^(IfStatement ^(expr) ^(statement) ^(statement)?);
 
-blockStatement : 'begin' statement* 'end' ';' ;
+blockStatement : 'begin' statement* 'end' ';' -> ^(BlockStatement statement*);
 
-whileStatement : 'while' expr 'do' statement ;
+whileStatement : 'while' expr 'do' statement -> ^(WhileStatement ^(expr) ^(statement)); 
 
-doStatement : 'repeat' statement ('while'|'until') expr ';' ;
+doStatement : 'repeat' statement ('while'|'until') expr ';' -> ^(DoStatement ^(statement) ^(expr) );
 
-breakStatement : 'break' ';' ;
+breakStatement : 'break' ';' -> ^(BreakStatement);
 
-expressionStatement : expr ';' ;
+expressionStatement : expr ';' -> ^(ExpressionStatement expr);
 
 // E x p r e s s i o n s
 
@@ -102,21 +122,30 @@ addExpr : multExpr (('+' | '-')^ multExpr)* ;
 
 multExpr : unaryExpr ( ('*' | '/' | '%')^ unaryExpr)? ;
 
-unaryExpr :  ('!'|'~')^ unaryExpr |  ('-'^ | '+'^)? primaryExpr ; 
+unaryExpr :  ('!'|'-')^ unaryExpr | primaryExpr ; 
 
-primaryExpr :
+primaryExpr 
+	: baseExpr '(' (expr (',' expr)*)? ')' sufExpr? -> ^(FunctionCall baseExpr ^(Args expr*) sufExpr?)
+	| baseExpr '[' (expr (',' expr)*)? ']' sufExpr? -> ^(ArrayAccess baseExpr ^(Indices expr*) sufExpr?)
+	| baseExpr
+	;
+
+sufExpr 
+	: '(' (expr (',' expr)*)? ')' sufExpr? -> ^(FunctionCall ^(Args expr*) sufExpr?)
+	| '[' (expr (',' expr)*)? ']' sufExpr? -> ^(ArrayAccess ^(Indices expr*) sufExpr?)
+	;
+
+baseExpr :
      LITERAL  
     | IDENTIFIER                             
-    | callExpr   
-    | indexer
     | '(' expr ')' -> ^(Braces expr)                         
     ;
 
-callExpr: IDENTIFIER '(' list_expr ')' -> ^(CallExpr IDENTIFIER list_expr) ;
+//callExpr: IDENTIFIER '(' list_expr ')' -> ^(CallExpr IDENTIFIER list_expr) ;
 
-indexer: IDENTIFIER '[' list_expr ']' -> ^(Indexer IDENTIFIER list_expr) ;
+//indexer: IDENTIFIER '[' list_expr ']' -> ^(Indexer IDENTIFIER list_expr) ;
 
-list_expr : (expr (',' expr)*)? -> ^(ListExpr expr*) ;
+//list_expr : (expr (',' expr)*)? -> ^(ListExpr expr*) ;
 
 // L e x e r 
 

@@ -1,0 +1,4 @@
+method calculateSum(x : bool) : uint
+var a : array [,] of array [,] of int;
+begin 
+end;

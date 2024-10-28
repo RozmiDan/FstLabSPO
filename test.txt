@@ -4,7 +4,7 @@ var fst_val, scnd_val, thd_val : long;
 begin 
     while fst_val > (scnd_val - thd_val) do thd_val := 23 * -2;
     myArray[1] := x + 5;
-    if true then begin
+    if i % 2 == 0 then begin
         x := 0b01001;
         if x == 9 then y := x + 1;
         repeat
